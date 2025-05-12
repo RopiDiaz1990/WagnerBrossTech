@@ -1,0 +1,227 @@
+/* Estilos generales */
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+/* Estilos para tablas */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+    background-color: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Estilos para botones */
+.btn-sm {
+    padding: .25rem .5rem;
+    font-size: .875rem;
+}
+
+/* Estilos para modales */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Estilos para formularios */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Estilos para la tabla de ventas */
+#tabla-ventas tfoot {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+/* Estilos para el carrito */
+#tabla-carrito {
+    font-size: 1rem;
+}
+
+#tabla-carrito thead th {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+#tabla-carrito tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+#tabla-carrito tfoot {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+#tabla-carrito tfoot td {
+    border-top: 2px solid #dee2e6;
+    padding: 1rem;
+}
+
+#tabla-carrito .img-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+}
+
+#tabla-carrito .input-group {
+    width: 150px;
+}
+
+#tabla-carrito .input-group .form-control {
+    text-align: center;
+    font-size: 1rem;
+    padding: 0.5rem;
+}
+
+#tabla-carrito .btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+}
+
+#total-carrito {
+    font-size: 1.2rem;
+    color: #0d6efd;
+}
+
+/* Ajustar el tamaño del contenedor del carrito */
+.card.h-100 {
+    height: calc(100vh - 2rem) !important;
+    margin-top: 1rem;
+}
+
+.card-body.d-flex {
+    height: calc(100% - 3.5rem);
+}
+
+.table-responsive.flex-grow-1 {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Estilos de los botones */
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Estilos de los inputs */
+.input-group-sm .form-control {
+    width: 60px;
+    text-align: center;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .container {
+        padding: 0.5rem;
+    }
+    
+    .card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .table-responsive {
+        margin-bottom: 0;
+    }
+    
+    .btn-sm {
+        padding: .375rem .75rem;
+        font-size: 1rem;
+    }
+}
+
+/* Estilos para el buscador */
+#buscadorProductos {
+    font-size: 1.1rem;
+    padding: 1rem;
+}
+
+#sugerencias {
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    background-color: white;
+    position: absolute;
+    width: 100%;
+    z-index: 1050;
+}
+
+#sugerencias .list-group-item {
+    cursor: pointer;
+    padding: 12px;
+    border-left: none;
+    border-right: none;
+    background-color: white;
+}
+
+#sugerencias .list-group-item:first-child {
+    border-top: none;
+}
+
+#sugerencias .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+#sugerencias .list-group-item img {
+    object-fit: cover;
+    height: 40px;
+    width: 40px;
+}
+
+/* Asegurar que el contenedor del buscador tenga posición relativa */
+.card-body .position-relative {
+    position: relative !important;
+}
+
+/* Estilos para el modal de imagen */
+#modalImagen .modal-dialog {
+    max-width: 800px;
+}
+
+#modalImagen .modal-body {
+    padding: 0;
+}
+
+#imagenModal {
+    max-height: 80vh;
+    width: auto;
+    margin: 0 auto;
+} 

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - Carrito de Clientes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 56px;
+        }
+        .navbar {
+            background-color: black !important;
+        }
+        .navbar-brand, .nav-link {
+            color: red !important;
+        }
+        .nav-link:hover {
+            color: #ff3333 !important;
+        }
+        .nav-link.active {
+            color: red !important;
+            font-weight: bold;
+        }
+        .search-results {
+            position: absolute;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+        .search-result-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .search-result-item:hover, .search-result-item.selected {
+            background-color: #f8f9fa;
+        }
+        .search-result-item.selected {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Carrito de Clientes</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/productos">Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ventas">Ventas</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Cerrar Sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Gestión de Productos</h5>
+                        <div>
+                            <button class="btn btn-success me-2" onclick="exportarExcel()">
+                                <i class="bi bi-file-excel"></i> Exportar Excel
+                            </button>
+                            <button class="btn btn-info me-2" onclick="document.getElementById('importarExcel').click()">
+                                <i class="bi bi-file-earmark-arrow-up"></i> Importar Excel
+                            </button>
+                            <input type="file" id="importarExcel" accept=".xlsx,.xls" style="display: none" onchange="importarExcel(event)">
+                            <button class="btn btn-warning me-2" onclick="document.getElementById('actualizarExcel').click()">
+                                <i class="bi bi-arrow-clockwise"></i> Actualizar Productos
+                            </button>
+                            <input type="file" id="actualizarExcel" accept=".xlsx,.xls" style="display: none" onchange="actualizarProductos(event)">
+                            <button class="btn btn-danger me-2" onclick="toggleBulkDelete()">
+                                <i class="bi bi-trash"></i> Eliminar Productos
+                            </button>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto">
+                                <i class="bi bi-plus-lg"></i> Nuevo Producto
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
+                            </div>
+                        </div>
+                        <div id="bulkDeleteControls" style="display: none;" class="mb-3">
+                            <button class="btn btn-secondary me-2" onclick="selectAllProducts()">
+                                <i class="bi bi-check-all"></i> Seleccionar Todos
+                            </button>
+                            <button class="btn btn-danger" onclick="confirmarEliminacion()">
+                                <i class="bi bi-trash"></i> Eliminar Seleccionados
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table" id="tabla-productos">
+                                <thead>
+                                    <tr>
+                                        <th class="bulk-delete-column" style="display: none;">Seleccionar</th>
+                                        <th>ID</th>
+                                        <th>Imagen</th>
+                                        <th>Nombre</th>
+                                        <th>Stock</th>
+                                        <th>Precio Efectivo</th>
+                                        <th>Precio Tarjeta</th>
+                                        <th>Observaciones</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for producto in productos %}
+                                    <tr>
+                                        <td class="bulk-delete-column" style="display: none;">
+                                            <input type="checkbox" class="product-checkbox" value="{{ producto.id }}">
+                                        </td>
+                                        <td>{{ producto.id }}</td>
+                                        <td>
+                                            {% if producto.imagen %}
+                                            <img src="{{ url_for('static', filename='uploads/' + producto.imagen) }}" 
+                                                 alt="{{ producto.nombre }}" 
+                                                 class="img-thumbnail" 
+                                                 style="max-width: 50px; cursor: pointer;"
+                                                 ondblclick="mostrarImagen('{{ url_for('static', filename='uploads/' + producto.imagen) }}', '{{ producto.nombre }}')">
+                                            {% else %}
+                                            <i class="bi bi-image text-muted"></i>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ producto.nombre }}</td>
+                                        <td>{{ producto.stock }}</td>
+                                        <td>${{ "%.2f"|format(producto.precio_efectivo) }}</td>
+                                        <td>${{ "%.2f"|format(producto.precio_tarjeta) }}</td>
+                                        <td>{{ producto.observaciones }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning" onclick="editarProducto({{ producto.id }})">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="eliminarProducto({{ producto.id }})">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nuevo/editar producto -->
+    <div class="modal fade" id="modalProducto" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nuevo Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formProducto" enctype="multipart/form-data">
+                        <input type="hidden" id="productoId">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock" class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="stock" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="precioEfectivo" class="form-label">Precio Efectivo</label>
+                            <input type="number" step="0.01" class="form-control" id="precioEfectivo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="precioTarjeta" class="form-label">Precio Tarjeta</label>
+                            <input type="number" step="0.01" class="form-control" id="precioTarjeta" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imagen" class="form-label">Imagen</label>
+                            <input type="file" class="form-control" id="imagen" accept="image/*">
+                            <div id="previewImagen" class="mt-2"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para vista de imagen -->
+    <div class="modal fade" id="modalImagen" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalImagenTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="imagenAmpliada" src="" alt="" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="{{ url_for('static', filename='js/productos.js') }}"></script>
+    <script>
+        let productos = [];
+        let carrito = [];
+        let selectedIndex = -1;
+
+        // Función para buscar productos
+        async function buscarProductos(query) {
+            if (query.length < 2) {
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/productos?q=${query}`);
+                productos = await response.json();
+                
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '';
+                
+                if (productos.length > 0) {
+                    productos.forEach((producto, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'search-result-item';
+                        div.textContent = `${producto.nombre} - $${producto.precio_efectivo}`;
+                        div.onclick = () => seleccionarProducto(producto);
+                        resultsDiv.appendChild(div);
+                    });
+                    resultsDiv.style.display = 'block';
+                    selectedIndex = -1;
+                } else {
+                    resultsDiv.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error al buscar productos:', error);
+            }
+        }
+
+        // Función para seleccionar un producto
+        function seleccionarProducto(producto) {
+            const cantidad = prompt('Ingrese la cantidad:', '1');
+            if (cantidad && !isNaN(cantidad) && cantidad > 0) {
+                agregarAlCarrito(producto, parseInt(cantidad));
+                document.getElementById('searchInput').value = '';
+                document.getElementById('searchResults').style.display = 'none';
+            }
+        }
+
+        // Función para agregar al carrito
+        function agregarAlCarrito(producto, cantidad) {
+            const item = {
+                id: producto.id,
+                nombre: producto.nombre,
+                precio: producto.precio_efectivo,
+                cantidad: cantidad
+            };
+            carrito.push(item);
+            actualizarCarrito();
+        }
+
+        // Función para actualizar el carrito
+        function actualizarCarrito() {
+            const cartDiv = document.getElementById('cartItems');
+            cartDiv.innerHTML = '';
+            let total = 0;
+
+            carrito.forEach((item, index) => {
+                const subtotal = item.precio * item.cantidad;
+                total += subtotal;
+
+                const div = document.createElement('div');
+                div.className = 'd-flex justify-content-between align-items-center mb-2';
+                div.innerHTML = `
+                    <div>
+                        <h6 class="mb-0">${item.nombre}</h6>
+                        <small>$${item.precio} x ${item.cantidad}</small>
+                    </div>
+                    <div>
+                        <span class="me-2">$${subtotal.toFixed(2)}</span>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(${index})">×</button>
+                    </div>
+                `;
+                cartDiv.appendChild(div);
+            });
+
+            document.getElementById('cartTotal').textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Función para eliminar del carrito
+        function eliminarDelCarrito(index) {
+            carrito.splice(index, 1);
+            actualizarCarrito();
+        }
+
+        // Función para finalizar la venta
+        async function finalizarVenta() {
+            if (carrito.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+
+            // Validar datos del cliente
+            const nombre = document.getElementById('clienteNombre').value.trim();
+            const apellido = document.getElementById('clienteApellido').value.trim();
+            const celular = document.getElementById('clienteCelular').value.trim();
+            const email = document.getElementById('clienteEmail').value.trim();
+
+            if (!nombre || !apellido) {
+                alert('Por favor, complete al menos el nombre y apellido del cliente');
+                return;
+            }
+
+            const formaPago = document.querySelector('input[name="formaPago"]:checked');
+            if (!formaPago) {
+                alert('Por favor, seleccione una forma de pago');
+                return;
+            }
+
+            try {
+                console.log('Enviando datos de venta:', {
+                    forma_pago: formaPago.value,
+                    cliente: {
+                        nombre,
+                        apellido,
+                        celular,
+                        email
+                    },
+                    productos: carrito.map(item => ({
+                        id: item.id,
+                        cantidad: item.cantidad
+                    }))
+                });
+
+                const response = await fetch('/api/ventas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        forma_pago: formaPago.value,
+                        cliente: {
+                            nombre,
+                            apellido,
+                            celular,
+                            email
+                        },
+                        productos: carrito.map(item => ({
+                            id: item.id,
+                            cantidad: item.cantidad
+                        }))
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Respuesta del servidor:', data);
+
+                if (!response.ok) {
+                    if (data.productos_no_encontrados) {
+                        alert(`Error: Los siguientes productos no fueron encontrados: ${data.productos_no_encontrados.join(', ')}`);
+                    } else if (data.productos_sin_stock) {
+                        const mensaje = data.productos_sin_stock.map(p => 
+                            `${p.nombre}: Stock disponible ${p.stock_disponible}, Cantidad solicitada ${p.cantidad_solicitada}`
+                        ).join('\n');
+                        alert(`Error: Stock insuficiente para los siguientes productos:\n${mensaje}`);
+                    } else {
+                        throw new Error(data.error || 'Error al procesar la venta');
+                    }
+                    return;
+                }
+
+                // Mostrar mensaje de éxito
+                alert(`Venta realizada con éxito\nTotal: $${data.total.toFixed(2)}`);
+                
+                // Limpiar carrito y formulario
+                carrito = [];
+                actualizarCarrito();
+                document.getElementById('clienteNombre').value = '';
+                document.getElementById('clienteApellido').value = '';
+                document.getElementById('clienteCelular').value = '';
+                document.getElementById('clienteEmail').value = '';
+                
+                // Recargar productos para actualizar stock
+                const responseProductos = await fetch('/api/productos');
+                productos = await responseProductos.json();
+                
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert('Error al procesar la venta: ' + error.message);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            buscarProductos(e.target.value);
+        });
+
+        // Navegación con teclado
+        document.getElementById('searchInput').addEventListener('keydown', (e) => {
+            const results = document.querySelectorAll('.search-result-item');
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (selectedIndex < results.length - 1) {
+                        selectedIndex++;
+                        updateSelection(results);
+                    }
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (selectedIndex > 0) {
+                        selectedIndex--;
+                        updateSelection(results);
+                    }
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && selectedIndex < productos.length) {
+                        seleccionarProducto(productos[selectedIndex]);
+                    }
+                    break;
+                case 'Escape':
+                    document.getElementById('searchResults').style.display = 'none';
+                    break;
+            }
+        });
+
+        function updateSelection(results) {
+            results.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // Cerrar resultados al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
+                document.getElementById('searchResults').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
